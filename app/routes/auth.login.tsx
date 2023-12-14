@@ -140,24 +140,26 @@ export default function Login() {
             Login
           </button>
 
-          <div className="divider w-full">
-            or use one of the following providers:
-          </div>
-
           {authMethods.authProviders.length > 0 && (
-            <div className="space-y-4 w-full">
-              {authMethods.authProviders.map((provider) => (
-                <Link
-                  key={provider.name}
-                  to={`/auth/oauth-create?redirect=${redirectUrl}&provider=${provider.name}`}
-                  className={clsx('btn w-full', {
-                    'btn-disabled': navigation.state !== 'idle',
-                  })}
-                >
-                  Login with {provider.displayName}
-                </Link>
-              ))}
-            </div>
+            <>
+              <div className="divider w-full">
+                or use one of the following providers:
+              </div>
+
+              <div className="space-y-4 w-full">
+                {authMethods.authProviders.map((provider) => (
+                  <Link
+                    key={provider.name}
+                    to={`/auth/oauth-create?redirect=${redirectUrl}&provider=${provider.name}`}
+                    className={clsx('btn w-full', {
+                      'btn-disabled': navigation.state !== 'idle',
+                    })}
+                  >
+                    Login with {provider.displayName}
+                  </Link>
+                ))}
+              </div>
+            </>
           )}
 
           <div className="text-center w-full">
