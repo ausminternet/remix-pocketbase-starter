@@ -1,0 +1,22 @@
+/* Write your global styles here, in PostCSS syntax */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.card {
+  @apply bg-base-100;
+}
+
+.card-body {
+  @apply gap-4;
+}
+
+.card-bordered {
+  @apply border-base-300;
+}
+
+@media (prefers-color-scheme: dark) {
+  .card-bordered {
+    @apply border-base-content/20;
+  }
+}
