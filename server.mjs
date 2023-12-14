@@ -34,9 +34,12 @@ app.all(
   }),
 )
 
-app.listen(3000, () => {
+const host = process.env.APP_HOST || 'localhost'
+const port = process.env.APP_PORT || 3000
+
+app.listen(port, host, () => {
   if (process.env.NODE_ENV === 'development') {
     broadcastDevReady(build)
   }
-  console.log('App listening on http://localhost:3000')
+  console.log(`App listening on http://${host}:${port}`)
 })
