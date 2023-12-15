@@ -8,6 +8,8 @@ Used technologies:
 - BaaS: [PocketBase](https://pocketbase.io)
 - UI: [DaisyUI](https://daisyui.com/)
 
+Demo: [https://remixpb.uber.space](https://remixpb.uber.space)
+
 ## Usage
 
 Install and run [Pocketbase](https://pocketbase.io/) or create a hosted instance on [pockethost.io](https://pockethost.io) and enter your pocketbase url in your `.env`:
