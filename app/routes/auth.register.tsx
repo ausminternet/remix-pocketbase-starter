@@ -88,7 +88,9 @@ export const action = async ({ request, context }: LoaderFunctionArgs) => {
 
       return json({
         success: false as const,
-        errors: new RegistrationError(error.response.data),
+        errors: new RegistrationError({
+          other: ['Failed to register, please try again.'],
+        }),
       })
     }
   }

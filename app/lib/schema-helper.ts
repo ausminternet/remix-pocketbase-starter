@@ -16,6 +16,9 @@ export const usernameString = z
   .min(2, { message: 'Username must be at least 2 characters' })
   .max(64, { message: 'Username must be less than 64 characters' })
   .trim()
+  .regex(/^[a-zA-Z0-9]+$/, {
+    message: 'Username must only contain alphanumeric characters',
+  })
 
 export const nameString = z
   .string()
