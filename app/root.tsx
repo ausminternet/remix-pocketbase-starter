@@ -1,5 +1,9 @@
 import { cssBundleHref } from '@remix-run/css-bundle'
-import type { LinksFunction, LoaderFunctionArgs } from '@remix-run/node'
+import type {
+  LinksFunction,
+  LoaderFunctionArgs,
+  MetaFunction,
+} from '@remix-run/node'
 import { json } from '@remix-run/node'
 import {
   Form,
@@ -16,6 +20,10 @@ import {
 import clsx from 'clsx'
 import tailwindCss from '~/tailwind.css'
 import { getUser } from './lib/user-helper.server'
+
+export const meta: MetaFunction = () => {
+  return [{ title: 'Remix + Pocketbase' }]
+}
 
 export const links: LinksFunction = () => [
   ...(cssBundleHref ? [{ rel: 'stylesheet', href: cssBundleHref }] : []),
