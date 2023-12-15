@@ -9,10 +9,12 @@ import {
 } from '@remix-run/react'
 import clsx from 'clsx'
 import { AlertCircleIcon } from 'lucide-react'
+import { ClientResponseError } from 'pocketbase'
 import { useEffect, useRef } from 'react'
 import { z } from 'zod'
 import { Input } from '~/lib/components/Input'
 import { getUser } from '~/lib/user-helper.server'
+import { commitSession, getSession } from '~/sessions'
 
 const loginUserSchema = z.object({
   email: z.string().email(),
@@ -39,8 +41,21 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
       .collection('users')
       .authWithPassword(result.data.email, result.data.password)
   } catch (error) {
-    console.error(error)
-    return json({ error: true })
+    if (error instanceof ClientResponseError) {
+      console.log(error)
+      if (error.status === 403) {
+        const session = await getSession(request.headers.get('Cookie'))
+        session.set('email', result.data.email)
+
+        return redirect('/auth/verify', {
+          headers: {
+            'Set-Cookie': await commitSession(session),
+          },
+        })
+      }
+
+      return json({ error: true })
+    }
   }
 
   if (!context.pb.authStore.isValid) {
@@ -49,12 +64,15 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
 
   const redirectUrl = new URL(request.url).searchParams.get('redirect') || '/'
 
+  const headers = new Headers()
+  if (context.pb.authStore.model?.verified) {
+    headers.set('Set-Cookie', context.pb.authStore.exportToCookie())
+  }
+
   return redirect(
     !context.pb.authStore.model?.verified ? '/auth/verify' : redirectUrl,
     {
-      headers: {
-        'Set-Cookie': context.pb.authStore.exportToCookie(),
-      },
+      headers,
     },
   )
 }

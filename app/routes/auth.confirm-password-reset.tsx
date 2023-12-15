@@ -158,7 +158,6 @@ export default function ConfirmPasswordReset() {
 
 export function ErrorBoundary() {
   const error = useRouteError()
-  console.log(error)
   if (isRouteErrorResponse(error)) {
     return (
       <div className="card card-bordered w-full">

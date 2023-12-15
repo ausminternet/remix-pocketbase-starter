@@ -13,6 +13,7 @@ import {
   usernameString,
 } from '~/lib/schema-helper'
 import { getUser } from '~/lib/user-helper.server'
+import { commitSession, getSession } from '~/sessions'
 
 class RegistrationError {
   constructor(
@@ -29,9 +30,7 @@ class RegistrationError {
   }
 
   toJSON() {
-    return {
-      errors: this.errors,
-    }
+    return this.errors
   }
 }
 
@@ -56,7 +55,10 @@ export const action = async ({ request, context }: LoaderFunctionArgs) => {
   const result = registerUserSchema.safeParse(body)
 
   if (!result.success) {
-    return json(new RegistrationError(result.error.flatten().fieldErrors))
+    return json({
+      success: false as const,
+      errors: new RegistrationError(result.error.flatten().fieldErrors),
+    })
   }
 
   try {
@@ -65,39 +67,49 @@ export const action = async ({ request, context }: LoaderFunctionArgs) => {
     console.error(error)
     if (error instanceof ClientResponseError) {
       if (error.response.data?.email?.code === 'validation_invalid_email') {
-        return json(
-          new RegistrationError({
+        return json({
+          success: false as const,
+          errors: new RegistrationError({
             email: ['Email is already in use.'],
           }),
-        )
+        })
       }
 
       if (
         error.response.data?.username?.code === 'validation_invalid_username'
       ) {
-        return json(
-          new RegistrationError({
+        return json({
+          success: false as const,
+          errors: new RegistrationError({
             username: ['Username is already in use.'],
           }),
-        )
+        })
       }
 
-      return json(new RegistrationError(error.response.data))
+      return json({
+        success: false as const,
+        errors: new RegistrationError(error.response.data),
+      })
     }
   }
 
   try {
     await context.pb.collection('users').requestVerification(result.data.email)
-    await context.pb
-      .collection('users')
-      .authWithPassword(result.data.email, result.data.password)
   } catch (error) {
-    return redirect('/auth/login')
+    return json({
+      success: false as const,
+      errors: new RegistrationError({
+        other: ['Failed to send verification email, please try again.'],
+      }),
+    })
   }
+
+  const session = await getSession(request.headers.get('Cookie'))
+  session.set('email', result.data.email)
 
   return redirect('/auth/verify', {
     headers: {
-      'Set-Cookie': context.pb.authStore.exportToCookie(),
+      'Set-Cookie': await commitSession(session),
     },
   })
 }
@@ -113,14 +125,16 @@ export const loader = ({ context }: LoaderFunctionArgs) => {
 export default function Register() {
   const actionData = useActionData<typeof action>()
 
+  const errors = actionData?.success ? {} : actionData?.errors ?? {}
+
   return (
     <div className="card card-bordered w-full">
       <div className="card-body space-y-4 ">
         <div className="card-title">Create Account</div>
-        {actionData?.errors.other && (
+        {errors.other && (
           <div className="alert alert-error">
             <AlertCircleIcon className="h-6 w-6" />
-            {actionData.errors.other}
+            {errors.other}
           </div>
         )}
         <Form method="POST" id="form" className="space-y-2">

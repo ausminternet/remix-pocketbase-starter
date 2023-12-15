@@ -30,8 +30,9 @@ export const links: LinksFunction = () => [
   { rel: 'stylesheet', href: tailwindCss },
 ]
 
-export const loader = ({ context }: LoaderFunctionArgs) => {
+export const loader = ({ context, request }: LoaderFunctionArgs) => {
   const user = getUser(context)
+
   return json(
     { user },
     {

@@ -5,6 +5,6 @@ export const { getSession, commitSession, destroySession } =
   createCookieSessionStorage<SessionData>({
     cookie: {
       secrets: ['s3cret1'],
-      name: 'oauthProviderState',
+      name: '__session',
     },
   })

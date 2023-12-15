@@ -4,7 +4,7 @@ import { Link, useLoaderData, useNavigate } from '@remix-run/react'
 import { AlertCircleIcon, CheckCircleIcon } from 'lucide-react'
 import { useEffect } from 'react'
 import invariant from 'tiny-invariant'
-import { destroySession, getSession } from '~/lib/oauth-session.server'
+import { commitSession, getSession } from '~/sessions'
 
 export const loader = async ({ request, context }: LoaderFunctionArgs) => {
   invariant(process.env.OAUTH_CALLBACK_URL, 'OAUTH_CALLBACK_URL is not set')
@@ -49,9 +49,11 @@ export const loader = async ({ request, context }: LoaderFunctionArgs) => {
     throw new Response('Could not authenticate.', { status: 400 })
   }
 
+  session.unset('provider')
+
   const headers = new Headers()
   headers.append('Set-Cookie', context.pb.authStore.exportToCookie())
-  headers.append('Set-Cookie', await destroySession(session))
+  headers.append('Set-Cookie', await commitSession(session))
 
   return json(
     {

@@ -1,45 +1,83 @@
-import { json, redirect, type ActionFunctionArgs } from '@remix-run/node'
-import { Form, useActionData } from '@remix-run/react'
+import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node'
+import { json, redirect } from '@remix-run/node'
+import {
+  Form,
+  isRouteErrorResponse,
+  useActionData,
+  useLoaderData,
+  useRouteError,
+} from '@remix-run/react'
 import { MailXIcon, SendIcon } from 'lucide-react'
+import { z } from 'zod'
+import { emailString } from '~/lib/schema-helper'
+import { getUser } from '~/lib/user-helper.server'
+import { getSession } from '~/sessions'
 
-export async function action({ context }: ActionFunctionArgs) {
-  const authStore = context.pb.authStore
+const verifyEmailSchema = z.object({
+  email: emailString,
+})
 
-  if (!authStore.isValid || !authStore.model) {
-    return redirect('/auth/login')
+export async function action({ context, request }: ActionFunctionArgs) {
+  if (getUser(context)) {
+    return redirect('/')
   }
 
-  if (authStore.isValid && authStore.model.verified) {
-    return redirect('/')
+  const body = Object.fromEntries(await request.formData())
+  const result = verifyEmailSchema.safeParse(body)
+
+  if (!result.success) {
+    throw json(
+      {
+        email: null,
+      },
+      {
+        status: 400,
+      },
+    )
   }
 
   try {
-    await context.pb
-      .collection('users')
-      .requestVerification(authStore.model.email)
+    await context.pb.collection('users').requestVerification(result.data.email)
   } catch (error) {
-    throw new Response('Failed to send verification Email')
+    console.error(error)
+    throw json(
+      {
+        email: result.data.email,
+      },
+      {
+        status: 400,
+      },
+    )
   }
 
-  return json({ success: true })
+  return json({ success: true, email: result.data.email })
 }
 
-export const loader = ({ context }: ActionFunctionArgs) => {
-  const authStore = context.pb.authStore
-
-  if (!authStore.isValid || !authStore.model) {
-    return redirect('/auth/login')
-  }
-
-  if (authStore.isValid && authStore.model.verified) {
+export const loader = async ({ request, context }: LoaderFunctionArgs) => {
+  if (getUser(context)) {
     return redirect('/')
   }
 
-  return null
+  const session = await getSession(request.headers.get('Cookie'))
+  const email = session.get('email')
+
+  const result = emailString.safeParse(email)
+
+  if (!result.success) {
+    throw redirect('/auth/login')
+  }
+
+  return json({
+    email: result.data,
+  })
 }
 
 export default function Verify() {
   const actionData = useActionData<typeof action>()
+  const loaderData = useLoaderData<typeof loader>()
+
+  const email = actionData?.success ? actionData.email : loaderData.email
+
   return (
     <div className="card card-bordered w-full">
       <div className="card-body space-y-4">
@@ -60,6 +98,7 @@ export default function Verify() {
         </p>
         <div className="card-actions">
           <Form method="post" className="w-full">
+            <input type="hidden" name="email" readOnly value={email} />
             <button className="btn btn-primary w-full">
               Resend Verification Email
             </button>
@@ -71,22 +110,33 @@ export default function Verify() {
 }
 
 export function ErrorBoundary() {
-  return (
-    <div className="card card-bordered w-full">
-      <div className="card-body space-y-4">
-        <div className="card-title">
-          <MailXIcon />
-          Oops...
-        </div>
-        <p>Failed to send verification email, please try again.</p>
-        <div className="card-actions">
-          <Form method="post" className="w-full">
-            <button className="btn btn-primary w-full">
-              Resend Verification Email
-            </button>
-          </Form>
+  const error = useRouteError()
+
+  if (isRouteErrorResponse(error)) {
+    const email = error.status === 400 ? error.data.email : null
+
+    return (
+      <div className="card card-bordered w-full">
+        <div className="card-body space-y-4">
+          <div className="card-title">
+            <MailXIcon />
+            Oops...
+          </div>
+          <p>Something went wrong.</p>
+
+          {email && (
+            <div className="card-actions">
+              <p>Please try again in a few minutes.</p>
+              <Form method="post" className="w-full">
+                <input type="hidden" name="email" readOnly value={email} />
+                <button className="btn btn-primary w-full">
+                  Resend Verification Email
+                </button>
+              </Form>
+            </div>
+          )}
         </div>
       </div>
-    </div>
-  )
+    )
+  }
 }

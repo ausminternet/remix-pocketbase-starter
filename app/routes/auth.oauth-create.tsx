@@ -2,7 +2,7 @@ import { redirect, type LoaderFunctionArgs } from '@remix-run/node'
 import { Link } from '@remix-run/react'
 import { AlertCircleIcon } from 'lucide-react'
 import invariant from 'tiny-invariant'
-import { commitSession, getSession } from '~/lib/oauth-session.server'
+import { commitSession, getSession } from '~/sessions'
 
 export const loader = async ({ request, context }: LoaderFunctionArgs) => {
   invariant(process.env.OAUTH_CALLBACK_URL, 'OAUTH_CALLBACK_URL is not set')

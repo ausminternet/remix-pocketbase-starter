@@ -1,6 +1,5 @@
-import { redirect, type LoaderFunctionArgs } from '@remix-run/node'
+import { json, redirect, type LoaderFunctionArgs } from '@remix-run/node'
 import {
-  Form,
   Link,
   isRouteErrorResponse,
   useNavigate,
@@ -12,11 +11,7 @@ import { useEffect } from 'react'
 export const loader = async ({ request, context }: LoaderFunctionArgs) => {
   const authStore = context.pb.authStore
 
-  if (!authStore.isValid || !authStore.model) {
-    return redirect('/auth/login')
-  }
-
-  if (authStore.model.verified) {
+  if (authStore.isValid && authStore.model?.verified) {
     return redirect('/')
   }
 
@@ -33,15 +28,14 @@ export const loader = async ({ request, context }: LoaderFunctionArgs) => {
     throw new Response('Invalid or expired token provided.', { status: 400 })
   }
 
-  try {
-    await context.pb.collection('users').authRefresh()
-  } catch (error) {
-    console.error(error)
-    context.pb.authStore.clear()
-    throw new Response('Could not authenticate.', { status: 400 })
-  }
-
-  return null
+  return json(
+    { success: true },
+    {
+      headers: {
+        'Set-Cookie': context.pb.authStore.exportToCookie(),
+      },
+    },
+  )
 }
 
 export default function ConfirmVerification() {
@@ -49,7 +43,7 @@ export default function ConfirmVerification() {
 
   useEffect(() => {
     const timeout = setTimeout(() => {
-      navigate('/aut/login')
+      navigate('/auth/login')
     }, 3000)
     return () => {
       clearTimeout(timeout)
@@ -68,7 +62,7 @@ export default function ConfirmVerification() {
 
         <p>
           You will be redirected in 3 seconds. If you are not redirected, please{' '}
-          <Link to="/" className="link link-primary">
+          <Link to="/auth/login" className="link link-primary">
             click here
           </Link>
         </p>
@@ -88,11 +82,6 @@ export function ErrorBoundary() {
             Oops...
           </div>
           <p>{error.data}</p>
-          <Form method="post" className="w-full" action="/auth/verify">
-            <button className="btn btn-primary w-full" type="submit">
-              Resend Verification Email
-            </button>
-          </Form>
         </div>
       </div>
     )

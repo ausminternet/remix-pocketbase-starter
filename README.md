@@ -20,6 +20,8 @@ POCKETBASE_URL=http://localhost:8090
 
 Open the PocketBase admin ui and go to *Settings* > *Application* and change the *Application URL* to your app url (`http://localhost.3000` for Example).
 
+Go to *Collections* > *Users* > *Edit Collection* > *Options*  and activate *Forbid authentication for unverified users*.
+
 Then got to *Settings* > *Mail Settings* and change the following action URLs:
 
 - Verification: `{APP_URL}/auth/confirm-verification?token={TOKEN}`

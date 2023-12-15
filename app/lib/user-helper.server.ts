@@ -12,10 +12,6 @@ export const requireUser = (
     throw redirect('/auth/login?redirect=' + new URL(request.url).pathname)
   }
 
-  if (!authStore.model.verified) {
-    throw redirect('/auth/verify')
-  }
-
   return authStore.model
 }
 
@@ -24,10 +20,6 @@ export const getUser = (context: AppLoadContext): UsersResponse | null => {
 
   if (!authStore.isValid || !authStore.model) {
     return null
-  }
-
-  if (!authStore.model.verified) {
-    throw redirect('/auth/verify')
   }
 
   return authStore.model
