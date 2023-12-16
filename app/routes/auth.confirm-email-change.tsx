@@ -5,6 +5,7 @@ import {
   Link,
   isRouteErrorResponse,
   useActionData,
+  useLoaderData,
   useNavigate,
   useRouteError,
 } from '@remix-run/react'
@@ -32,16 +33,10 @@ class ConfirmEmailChangeError {
 
 const confirmEmailChangeSchema = z.object({
   password: getPasswordString('Password is required'),
+  token: z.string({ required_error: 'Verification token is missing' }),
 })
 
 export const action = async ({ request, context }: LoaderFunctionArgs) => {
-  const searchParams = new URL(request.url).searchParams
-  const token = searchParams.get('token')
-
-  if (!token) {
-    throw new Response('Verification token is missing.', { status: 400 })
-  }
-
   const body = Object.fromEntries(await request.formData())
   const result = confirmEmailChangeSchema.safeParse(body)
 
@@ -55,28 +50,34 @@ export const action = async ({ request, context }: LoaderFunctionArgs) => {
   try {
     await context.pb
       .collection('users')
-      .confirmEmailChange(token, result.data.password)
+      .confirmEmailChange(result.data.token, result.data.password)
   } catch (error) {
-    console.error(error)
-    if (
-      error instanceof ClientResponseError &&
-      error.response.data?.password?.code === 'validation_invalid_password'
-    ) {
-      return json({
-        success: false as const,
-        errors: new ConfirmEmailChangeError({
-          password: ['Invalid password provided.'],
-        }),
-      })
+    if (error instanceof ClientResponseError) {
+      if (error.response.data?.token?.code === 'validation_invalid_token') {
+        throw new Response('Invalid or expired token provided.', {
+          status: 400,
+        })
+      }
+
+      if (
+        error.response.data?.password?.code === 'validation_invalid_password'
+      ) {
+        return json({
+          success: false as const,
+          errors: new ConfirmEmailChangeError({
+            password: ['Invalid password provided.'],
+          }),
+        })
+      }
     }
 
-    throw new Response('Invalid or expired token provided.', { status: 400 })
+    throw new Response('Something went wrong.', { status: 400 })
   }
 
   return json({ success: true as const })
 }
 
-export const loader = ({ request, context }: LoaderFunctionArgs) => {
+export const loader = ({ request }: LoaderFunctionArgs) => {
   const token = new URL(request.url).searchParams.get('token')
 
   if (!token) {
@@ -87,6 +88,7 @@ export const loader = ({ request, context }: LoaderFunctionArgs) => {
 }
 
 export default function ConfirmEmailChange() {
+  const { token } = useLoaderData<typeof loader>()
   const actionData = useActionData<typeof action>()
   const navigate = useNavigate()
 
@@ -96,14 +98,12 @@ export default function ConfirmEmailChange() {
     }
 
     const timeout = setTimeout(() => {
-      navigate('/aut/login')
+      navigate('/auth/login')
     }, 3000)
     return () => {
       clearTimeout(timeout)
     }
   }, [actionData?.success, navigate])
-
-  const errors = actionData?.success ? {} : actionData?.errors || {}
 
   if (actionData?.success) {
     return (
@@ -133,16 +133,17 @@ export default function ConfirmEmailChange() {
       <div className="card-body space-y-4">
         <div className="card-title">Change email</div>
 
-        {errors.other?.length && (
+        {actionData?.errors.other?.length && (
           <div className="alert alert-error mb-8">
             <AlertCircleIcon className="w-6 h-6" />
-            {errors.other.map((error) => (
+            {actionData?.errors.other.map((error) => (
               <div key={error}>{error}</div>
             ))}
           </div>
         )}
         <p>To change your email, enter your password:</p>
         <Form method="POST" id="form" className="space-y-2">
+          <input type="hidden" name="token" value={token} readOnly />
           <Input
             autoFocus
             name="password"
@@ -150,11 +151,11 @@ export default function ConfirmEmailChange() {
             label="Password"
             id="password"
             required
-            errors={errors.password}
+            errors={actionData?.errors.password}
           />
         </Form>
         <div className="card-actions">
-          <button type="submit" className="btn btn-primary w-full">
+          <button type="submit" className="btn btn-primary w-full" form="form">
             Change email
           </button>
         </div>

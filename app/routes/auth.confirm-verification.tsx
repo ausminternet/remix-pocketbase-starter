@@ -7,11 +7,10 @@ import {
 } from '@remix-run/react'
 import { MailCheckIcon, MailXIcon } from 'lucide-react'
 import { useEffect } from 'react'
+import { getUser } from '~/lib/user-helper.server'
 
 export const loader = async ({ request, context }: LoaderFunctionArgs) => {
-  const authStore = context.pb.authStore
-
-  if (authStore.isValid && authStore.model?.verified) {
+  if (getUser(context)) {
     return redirect('/')
   }
 

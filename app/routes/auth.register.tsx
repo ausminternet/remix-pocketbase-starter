@@ -56,7 +56,6 @@ export const action = async ({ request, context }: LoaderFunctionArgs) => {
 
   if (!result.success) {
     return json({
-      success: false as const,
       errors: new RegistrationError(result.error.flatten().fieldErrors),
     })
   }
@@ -68,7 +67,6 @@ export const action = async ({ request, context }: LoaderFunctionArgs) => {
     if (error instanceof ClientResponseError) {
       if (error.response.data?.email?.code === 'validation_invalid_email') {
         return json({
-          success: false as const,
           errors: new RegistrationError({
             email: ['Email is already in use.'],
           }),
@@ -79,7 +77,6 @@ export const action = async ({ request, context }: LoaderFunctionArgs) => {
         error.response.data?.username?.code === 'validation_invalid_username'
       ) {
         return json({
-          success: false as const,
           errors: new RegistrationError({
             username: ['Username is already in use.'],
           }),
@@ -87,7 +84,6 @@ export const action = async ({ request, context }: LoaderFunctionArgs) => {
       }
 
       return json({
-        success: false as const,
         errors: new RegistrationError({
           other: ['Failed to register, please try again.'],
         }),
@@ -99,7 +95,6 @@ export const action = async ({ request, context }: LoaderFunctionArgs) => {
     await context.pb.collection('users').requestVerification(result.data.email)
   } catch (error) {
     return json({
-      success: false as const,
       errors: new RegistrationError({
         other: ['Failed to send verification email, please try again.'],
       }),
@@ -127,16 +122,14 @@ export const loader = ({ context }: LoaderFunctionArgs) => {
 export default function Register() {
   const actionData = useActionData<typeof action>()
 
-  const errors = actionData?.success ? {} : actionData?.errors ?? {}
-
   return (
     <div className="card card-bordered w-full">
       <div className="card-body space-y-4 ">
         <div className="card-title">Create Account</div>
-        {errors.other && (
+        {actionData?.errors.other && (
           <div className="alert alert-error">
             <AlertCircleIcon className="h-6 w-6" />
-            {errors.other}
+            {actionData?.errors.other}
           </div>
         )}
         <Form method="POST" id="form" className="space-y-2">

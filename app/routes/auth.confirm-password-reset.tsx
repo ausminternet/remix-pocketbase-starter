@@ -16,6 +16,7 @@ import {
   getPasswordString,
   passwordsEqualityRefinement,
 } from '~/lib/schema-helper'
+import { getUser } from '~/lib/user-helper.server'
 
 export const resetPasswordSchema = z
   .object({
@@ -25,9 +26,7 @@ export const resetPasswordSchema = z
   .superRefine(passwordsEqualityRefinement)
 
 export const action = async ({ request, context }: LoaderFunctionArgs) => {
-  const authStore = context.pb.authStore
-
-  if (authStore.isValid) {
+  if (getUser(context)) {
     return redirect('/')
   }
 
@@ -92,7 +91,7 @@ export default function ConfirmPasswordReset() {
     }
 
     const timeout = setTimeout(() => {
-      navigate('/aut/login')
+      navigate('/auth/login')
     }, 3000)
     return () => {
       clearTimeout(timeout)

@@ -7,7 +7,6 @@ import { commitSession, getSession } from '~/sessions'
 export const loader = async ({ request, context }: LoaderFunctionArgs) => {
   invariant(process.env.OAUTH_CALLBACK_URL, 'OAUTH_CALLBACK_URL is not set')
 
-  const pb = context.pb
   const searchParams = new URL(request.url).searchParams
   const providerParam = searchParams.get('provider')
 
@@ -15,7 +14,7 @@ export const loader = async ({ request, context }: LoaderFunctionArgs) => {
     throw new Response('No Provider given.', { status: 400 })
   }
 
-  const authMethods = await pb.collection('users').listAuthMethods()
+  const authMethods = await context.pb.collection('users').listAuthMethods()
   const provider = authMethods.authProviders.find(
     (provider) => provider.name === providerParam,
   )

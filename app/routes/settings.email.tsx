@@ -64,6 +64,10 @@ export const loader = async ({ request, context }: ActionFunctionArgs) => {
     throw new Response('Could not load external auths.', { status: 500 })
   }
 
+  if (auths.length === 0) {
+    return json({ provider: null, user })
+  }
+
   let authMethods: AuthMethodsList
 
   try {
@@ -86,8 +90,6 @@ export const loader = async ({ request, context }: ActionFunctionArgs) => {
 export default function Email() {
   const { provider, user } = useLoaderData<typeof loader>()
   const actionData = useActionData<typeof action>()
-
-  const errors = actionData?.success ? {} : actionData?.errors ?? {}
 
   if (actionData?.success) {
     return (
@@ -120,10 +122,10 @@ export default function Email() {
     <div>
       <Title>Email</Title>
 
-      {errors.other?.length && (
+      {actionData?.errors.other?.length && (
         <div className="alert alert-danger mb-8">
           <AlertCircleIcon className="h-6 w-6" />
-          {errors.other.map((error) => (
+          {actionData?.errors.other.map((error) => (
             <div key={error}>{error}</div>
           ))}
         </div>
@@ -139,7 +141,7 @@ export default function Email() {
           name="email"
           type="email"
           required
-          errors={errors.email}
+          errors={actionData?.errors.email}
         />
         <button className="btn btn-primary">Request email change</button>
       </Form>

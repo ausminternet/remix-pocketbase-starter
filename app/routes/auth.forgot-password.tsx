@@ -11,9 +11,7 @@ const forgotPasswordSchema = z.object({
 })
 
 export const action = async ({ request, context }: LoaderFunctionArgs) => {
-  const user = getUser(context)
-
-  if (user) {
+  if (getUser(context)) {
     return redirect('/')
   }
 
@@ -42,9 +40,7 @@ export const action = async ({ request, context }: LoaderFunctionArgs) => {
 }
 
 export const loader = async ({ context }: LoaderFunctionArgs) => {
-  const user = getUser(context)
-
-  if (user) {
+  if (getUser(context)) {
     return redirect('/')
   }
 

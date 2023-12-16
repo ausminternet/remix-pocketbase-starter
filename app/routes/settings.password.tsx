@@ -75,14 +75,20 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
       .collection('users')
       .authWithPassword(user.email, result.data.password)
   } catch (error) {
-    return redirect('/login')
+    console.error(error)
+    context.pb.authStore.clear()
+    return redirect('/auth/login', {
+      headers: {
+        'Set-Cookie': context.pb.authStore.exportToCookie(),
+      },
+    })
   }
 
   return json(
     { success: true as const },
     {
       headers: {
-        'Set-Cookie': await context.pb.authStore.exportToCookie(),
+        'Set-Cookie': context.pb.authStore.exportToCookie(),
       },
     },
   )
@@ -97,6 +103,10 @@ export const loader = async ({ request, context }: ActionFunctionArgs) => {
     auths = await context.pb.collection('users').listExternalAuths(user.id)
   } catch (error) {
     throw new Response('Could not load external auths.', { status: 500 })
+  }
+
+  if (auths.length === 0) {
+    return json({ provider: null })
   }
 
   let authMethods: AuthMethodsList
@@ -201,6 +211,7 @@ export function ErrorBoundary() {
         <Title>Change Password</Title>
         <div className="alert alert-error">
           <AlertCircleIcon className="h-6 w-6" />
+          {error.data}
           Something went wrong, please try again.
         </div>
       </div>
