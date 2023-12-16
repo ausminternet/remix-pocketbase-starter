@@ -1,5 +1,6 @@
 import type { RefinementCtx } from 'zod'
 import { z } from 'zod'
+import { getSizeForMegaBytes } from './utils'
 
 export const getPasswordString = (requiredError: string) => {
   return z.string({ required_error: requiredError }).min(8, {
@@ -45,3 +46,20 @@ export const passwordsEqualityRefinement = (
   }
   return true
 }
+
+const MAX_FILE_SIZE = getSizeForMegaBytes(5)
+const ACCEPTED_IMAGE_TYPES = [
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  'image/webp',
+]
+
+export const avatarFileString = z
+  .any()
+  .refine((file) => file.size <= MAX_FILE_SIZE, `Max file size is 5MB.`)
+  .refine(
+    (file) => ACCEPTED_IMAGE_TYPES.includes(file.type),
+    'Only .jpg, .jpeg, .png and .webp files are accepted.',
+  )
+  .optional()

@@ -20,6 +20,7 @@ import {
 import clsx from 'clsx'
 import tailwindCss from '~/tailwind.css'
 import { getUser } from './lib/user-helper.server'
+import { getAvatarURL } from './lib/utils'
 
 export const meta: MetaFunction = () => {
   return [{ title: 'Remix + Pocketbase' }]
@@ -45,6 +46,9 @@ export const loader = ({ context, request }: LoaderFunctionArgs) => {
 
 export default function App() {
   const { user } = useLoaderData<typeof loader>()
+
+  const avatarUrl = user ? getAvatarURL(user) : null
+
   return (
     <html lang="en">
       <head>
@@ -87,6 +91,13 @@ export default function App() {
               <strong>Auth: </strong>
               {user ? (
                 <>
+                  {avatarUrl && (
+                    <div className="avatar">
+                      <div className="w-6 rounded-full">
+                        <img src={avatarUrl} alt="" />
+                      </div>
+                    </div>
+                  )}
                   <Form method="post" action="/auth/logout">
                     <button className="link link-primary link-hover">
                       Logout ({user.email})

@@ -9,7 +9,7 @@ export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ className, label, labelRight, errors, ...props }, ref) => {
+  ({ className, label, labelRight, errors, type, ...props }, ref) => {
     return (
       <label className="form-control w-full">
         {label && (
@@ -19,10 +19,13 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           </div>
         )}
         <input
-          className={clsx('input input-bordered w-full', {
+          className={clsx('input-bordered w-full', {
             'input-error': errors && errors.length > 0,
+            input: type !== 'file',
+            'file-input file-input-primary normal-case': type === 'file',
           })}
           ref={ref}
+          type={type ?? 'text'}
           {...props}
         />
         {errors && errors.length > 0 && (
