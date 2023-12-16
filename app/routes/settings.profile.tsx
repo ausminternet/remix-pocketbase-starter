@@ -2,7 +2,7 @@ import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node'
 import { json } from '@remix-run/node'
 import { Form, useActionData, useLoaderData } from '@remix-run/react'
 import { CheckCircleIcon, UserRoundIcon } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { z } from 'zod'
 import { Input } from '~/lib/components/Input'
 import { Title } from '~/lib/components/Title'
@@ -12,7 +12,8 @@ import {
   usernameString,
 } from '~/lib/schema-helper'
 import { requireUser } from '~/lib/user-helper.server'
-import { getAvatarURL, getSizeForMegaBytes } from '~/lib/utils'
+import { getSizeForMegaBytes } from '~/lib/utils'
+import { getAvatarURL } from '~/lib/utils.server'
 
 class ChangeProfileError {
   constructor(
@@ -61,7 +62,7 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
       })
     }
 
-    return json({ success: true as const })
+    return json({ success: true as const, avatarUrl: getAvatarURL(user) })
   }
 
   const result = changeProfileSchema.safeParse(body)
@@ -94,24 +95,24 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
 export const loader = ({ request, context }: LoaderFunctionArgs) => {
   const user = requireUser(request, context)
 
-  return json({ user })
+  return json({ user, avatarUrl: getAvatarURL(user) })
 }
 
 export default function Profile() {
-  const { user } = useLoaderData<typeof loader>()
+  const { user, avatarUrl } = useLoaderData<typeof loader>()
   const actionData = useActionData<typeof action>()
-  const [avatarSrc, setAvatarSrc] = useState<string | null>(getAvatarURL(user))
+  const [avatarSrc, setAvatarSrc] = useState<string | null>(avatarUrl)
   const [isDirty, setIsDirty] = useState(false)
 
   const [errors, setErrors] = useState<ChangeProfileError['errors']>(
     actionData?.success ? {} : actionData?.errors ?? {},
   )
 
-  useEffect(() => {
-    if (actionData?.success) {
-      setAvatarSrc(getAvatarURL(user))
-    }
-  }, [actionData?.success, user])
+  // useEffect(() => {
+  //   if (actionData?.success) {
+  //     setAvatarSrc(getAvatarURL(user))
+  //   }
+  // }, [actionData?.success, user])
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]

@@ -20,7 +20,7 @@ import {
 import clsx from 'clsx'
 import tailwindCss from '~/tailwind.css'
 import { getUser } from './lib/user-helper.server'
-import { getAvatarURL } from './lib/utils'
+import { getAvatarURL } from './lib/utils.server'
 
 export const meta: MetaFunction = () => {
   return [{ title: 'Remix + Pocketbase' }]
@@ -35,7 +35,7 @@ export const loader = ({ context, request }: LoaderFunctionArgs) => {
   const user = getUser(context)
 
   return json(
-    { user },
+    { user, avatarUrl: user ? getAvatarURL(user) : null },
     {
       headers: {
         'Set-Cookie': context.pb.authStore.exportToCookie(),
@@ -45,9 +45,7 @@ export const loader = ({ context, request }: LoaderFunctionArgs) => {
 }
 
 export default function App() {
-  const { user } = useLoaderData<typeof loader>()
-
-  const avatarUrl = user ? getAvatarURL(user) : null
+  const { user, avatarUrl } = useLoaderData<typeof loader>()
 
   return (
     <html lang="en">
