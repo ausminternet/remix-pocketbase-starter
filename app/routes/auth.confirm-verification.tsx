@@ -7,10 +7,9 @@ import {
 } from '@remix-run/react'
 import { MailCheckIcon, MailXIcon } from 'lucide-react'
 import { useEffect } from 'react'
-import { getUser } from '~/lib/user-helper.server'
 
 export const loader = async ({ request, context }: LoaderFunctionArgs) => {
-  if (getUser(context)) {
+  if (context.user) {
     return redirect('/')
   }
 

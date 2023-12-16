@@ -6,21 +6,9 @@ export const requireUser = (
   request: Request,
   context: AppLoadContext,
 ): UsersResponse => {
-  const authStore = context.pb.authStore
-
-  if (!authStore.isValid || !authStore.model) {
+  if (!context.user) {
     throw redirect('/auth/login?redirect=' + new URL(request.url).pathname)
   }
 
-  return authStore.model
-}
-
-export const getUser = (context: AppLoadContext): UsersResponse | null => {
-  const authStore = context.pb.authStore
-
-  if (!authStore.isValid || !authStore.model) {
-    return null
-  }
-
-  return authStore.model
+  return context.user
 }

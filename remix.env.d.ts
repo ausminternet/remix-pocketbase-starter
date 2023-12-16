@@ -7,8 +7,9 @@ declare module '@remix-run/node' {
   export interface AppLoadContext {
     pb: TypedPocketBase & {
       authStore: {
-        model: UsersResponse | null
+        user: UsersResponse | null
       }
     }
+    user: UsersResponse | null
   }
 }

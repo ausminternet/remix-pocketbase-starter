@@ -8,9 +8,26 @@ import compression from 'compression'
 import cookieParser from 'cookie-parser'
 import express from 'express'
 import morgan from 'morgan'
-import PocketBase from 'pocketbase'
+import PocketBase, { BaseAuthStore } from 'pocketbase'
 import sourceMapSupport from 'source-map-support'
 import invariant from 'tiny-invariant'
+
+class CustomAuthStore extends BaseAuthStore {
+  get user() {
+    const model = this.model
+
+    if (!model || !this.isValid) {
+      return null
+    }
+
+    return {
+      ...model,
+      avatar: model?.avatar
+        ? `${process.env.POCKETBASE_URL}/api/files/${model.collectionId}/${model.id}/${model.avatar}`
+        : undefined,
+    }
+  }
+}
 
 sourceMapSupport.install({
   retrieveSourceMap: function (source) {
@@ -36,7 +53,8 @@ const initialBuild = await reimportServer()
 
 async function getLoadContext(req) {
   invariant(process.env.POCKETBASE_URL, 'POCKETBASE_URL is not set')
-  const pb = new PocketBase(process.env.POCKETBASE_URL)
+
+  const pb = new PocketBase(process.env.POCKETBASE_URL, new CustomAuthStore())
 
   const parsedCookie = JSON.parse(req.cookies['pb_auth'] || '{}')
   pb.authStore.save(parsedCookie.token || '', parsedCookie.model || null)
@@ -49,6 +67,7 @@ async function getLoadContext(req) {
 
   return {
     pb,
+    user: pb.authStore.user,
   }
 }
 

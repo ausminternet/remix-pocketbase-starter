@@ -10,7 +10,6 @@ import {
 import { MailXIcon, SendIcon } from 'lucide-react'
 import { z } from 'zod'
 import { emailString } from '~/lib/schema-helper'
-import { getUser } from '~/lib/user-helper.server'
 import { getSession } from '~/sessions'
 
 const verifyEmailSchema = z.object({
@@ -18,7 +17,7 @@ const verifyEmailSchema = z.object({
 })
 
 export async function action({ context, request }: ActionFunctionArgs) {
-  if (getUser(context)) {
+  if (context.user) {
     return redirect('/')
   }
 
@@ -54,7 +53,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
 }
 
 export const loader = async ({ request, context }: LoaderFunctionArgs) => {
-  if (getUser(context)) {
+  if (context.user) {
     return redirect('/')
   }
 

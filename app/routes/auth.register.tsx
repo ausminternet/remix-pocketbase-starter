@@ -12,7 +12,6 @@ import {
   passwordsEqualityRefinement,
   usernameString,
 } from '~/lib/schema-helper'
-import { getUser } from '~/lib/user-helper.server'
 import { commitSession, getSession } from '~/sessions'
 
 class RegistrationError {
@@ -45,9 +44,7 @@ export const registerUserSchema = z
   .superRefine(passwordsEqualityRefinement)
 
 export const action = async ({ request, context }: LoaderFunctionArgs) => {
-  const user = getUser(context)
-
-  if (user) {
+  if (context.user) {
     return redirect('/')
   }
 
@@ -112,7 +109,7 @@ export const action = async ({ request, context }: LoaderFunctionArgs) => {
 }
 
 export const loader = ({ context }: LoaderFunctionArgs) => {
-  if (getUser(context)) {
+  if (context.user) {
     return redirect('/')
   }
 

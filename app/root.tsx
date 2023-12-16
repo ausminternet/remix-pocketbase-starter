@@ -19,8 +19,6 @@ import {
 } from '@remix-run/react'
 import clsx from 'clsx'
 import tailwindCss from '~/tailwind.css'
-import { getUser } from './lib/user-helper.server'
-import { getAvatarURL } from './lib/utils.server'
 
 export const meta: MetaFunction = () => {
   return [{ title: 'Remix + Pocketbase' }]
@@ -31,11 +29,9 @@ export const links: LinksFunction = () => [
   { rel: 'stylesheet', href: tailwindCss },
 ]
 
-export const loader = ({ context, request }: LoaderFunctionArgs) => {
-  const user = getUser(context)
-
+export const loader = ({ context }: LoaderFunctionArgs) => {
   return json(
-    { user, avatarUrl: user ? getAvatarURL(user) : null },
+    { user: context.user },
     {
       headers: {
         'Set-Cookie': context.pb.authStore.exportToCookie(),
@@ -45,7 +41,7 @@ export const loader = ({ context, request }: LoaderFunctionArgs) => {
 }
 
 export default function App() {
-  const { user, avatarUrl } = useLoaderData<typeof loader>()
+  const { user } = useLoaderData<typeof loader>()
 
   return (
     <html lang="en">
@@ -89,10 +85,10 @@ export default function App() {
               <strong>Auth: </strong>
               {user ? (
                 <>
-                  {avatarUrl && (
+                  {user.avatar && (
                     <div className="avatar">
                       <div className="w-6 rounded-full">
-                        <img src={avatarUrl} alt="" />
+                        <img src={user.avatar} alt="" />
                       </div>
                     </div>
                   )}

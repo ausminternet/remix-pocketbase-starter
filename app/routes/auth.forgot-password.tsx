@@ -4,14 +4,13 @@ import { SendIcon } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 import { z } from 'zod'
 import { Input } from '~/lib/components/Input'
-import { getUser } from '~/lib/user-helper.server'
 
 const forgotPasswordSchema = z.object({
   email: z.string(),
 })
 
 export const action = async ({ request, context }: LoaderFunctionArgs) => {
-  if (getUser(context)) {
+  if (context.user) {
     return redirect('/')
   }
 
@@ -40,7 +39,7 @@ export const action = async ({ request, context }: LoaderFunctionArgs) => {
 }
 
 export const loader = async ({ context }: LoaderFunctionArgs) => {
-  if (getUser(context)) {
+  if (context.user) {
     return redirect('/')
   }
 

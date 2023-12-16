@@ -99,9 +99,9 @@ export const loader = ({ request, context }: LoaderFunctionArgs) => {
 }
 
 export default function Profile() {
-  const { user, avatarUrl } = useLoaderData<typeof loader>()
+  const { user } = useLoaderData<typeof loader>()
   const actionData = useActionData<typeof action>()
-  const [avatarSrc, setAvatarSrc] = useState<string | null>(avatarUrl)
+  const [avatarSrc, setAvatarSrc] = useState<string | null>(user.avatar)
   const [isDirty, setIsDirty] = useState(false)
 
   const [errors, setErrors] = useState<ChangeProfileError['errors']>(

@@ -16,7 +16,6 @@ import {
   getPasswordString,
   passwordsEqualityRefinement,
 } from '~/lib/schema-helper'
-import { getUser } from '~/lib/user-helper.server'
 
 export const resetPasswordSchema = z
   .object({
@@ -26,7 +25,7 @@ export const resetPasswordSchema = z
   .superRefine(passwordsEqualityRefinement)
 
 export const action = async ({ request, context }: LoaderFunctionArgs) => {
-  if (getUser(context)) {
+  if (context.user) {
     return redirect('/')
   }
 

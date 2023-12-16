@@ -13,7 +13,6 @@ import { ClientResponseError } from 'pocketbase'
 import { useEffect, useRef } from 'react'
 import { z } from 'zod'
 import { Input } from '~/lib/components/Input'
-import { getUser } from '~/lib/user-helper.server'
 import { commitSession, getSession } from '~/sessions'
 
 const loginUserSchema = z.object({
@@ -22,9 +21,7 @@ const loginUserSchema = z.object({
 })
 
 export const action = async ({ request, context }: ActionFunctionArgs) => {
-  const user = getUser(context)
-
-  if (user) {
+  if (context.user) {
     return redirect('/')
   }
 
@@ -79,8 +76,8 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
 
 export const loader = async ({ request, context }: LoaderFunctionArgs) => {
   const redirectUrl = new URL(request.url).searchParams.get('redirect') ?? '/'
-
-  if (getUser(context)) {
+  console.log(context.user)
+  if (context.user) {
     return redirect(redirectUrl)
   }
 
